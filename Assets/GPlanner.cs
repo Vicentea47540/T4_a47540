@@ -1,7 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using Unity.Linq;
+using System.Linq;
+
 
 public class Node{
     public Node parent;
@@ -81,6 +82,70 @@ public class GPlanner : MonoBehaviour
         }
 
         return queue;
+    }
+
+    private bool BuildGraph(Node parent, List<Node> leaves, List<GAction> usableActions, Dictionary<string, int> goal)
+    {
+        bool foundPath = false;
+
+        foreach (GAction action in usableActions)
+        {
+            if (action.IsAchievableGiven(parent.state))
+            {
+                Dictionary<string, int> currentState = new Dictionary<string, int>(parent.state);
+                foreach (KeyValuePair<string, int> eff in action.effects)
+                {
+                    if (!currentState.ContainsKey(eff.Key))
+                    {
+                        currentState.Add(eff.Key, eff.Value);
+                    }
+                }
+
+                Node node = new Node(parent, parent.runningCost + action.cost, currentState, action);
+
+                if (GoalAchieved(goal, currentState))
+                {
+                    leaves.Add(node);
+                    foundPath = true;
+                }
+                else
+                {
+                    List<GAction> subset = ActionSubset(usableActions, action);
+                    bool found = BuildGraph(node, leaves, subset, goal);
+                    if (found)
+                    {
+                        foundPath = true;
+                    }
+                }
+            }
+        }
+
+        return foundPath;
+    }
+
+    private bool GoalAchieved(Dictionary<string, int> goal, Dictionary<string, int> state)
+    {
+        foreach (KeyValuePair<string, int> g in goal)
+        {
+            if (!state.ContainsKey(g.Key))
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private List<GAction> ActionSubset(List<GAction> actions, GAction removeMe)
+    {
+        List<GAction> subset = new List<GAction>();
+        foreach (GAction a in actions)
+        {
+            if (!a.Equals(removeMe))
+            {
+                subset.Add(a);
+            }
+        }
+        return subset;
     }
 
 }
