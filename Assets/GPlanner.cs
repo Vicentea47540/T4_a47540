@@ -88,7 +88,7 @@ public class GPlanner {
         bool foundPath = false;
         foreach (GAction action in usableActions) {
 
-            if (action.IsAchievableGiven(parent.state)) {
+            if (action.IsAhievableGiven(parent.state)) {
 
                 Dictionary<string, int> currentState = new Dictionary<string, int>(parent.state);
 

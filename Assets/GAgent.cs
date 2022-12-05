@@ -1,107 +1,127 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 
-public class SubGoal
-{
-    public Dictionary<string, int> sgoals;
+public class SubGoal {
+
+    // Dictionary to store our goals
+    public Dictionary<string, int> sGoals;
+    // Bool to store if goal should be removed
     public bool remove;
-    public SubGoal(string s, int i, bool r)
-    {
-        sgoals = new Dictionary<string, int>();
-        sgoals.Add(s, i);
+
+    // Constructor
+    public SubGoal(string s, int i, bool r) {
+
+        sGoals = new Dictionary<string, int>();
+        sGoals.Add(s, i);
         remove = r;
     }
 }
-public class GAgent : MonoBehaviour
-{
+
+public class GAgent : MonoBehaviour {
+
     public List<GAction> actions = new List<GAction>();
     public Dictionary<SubGoal, int> goals = new Dictionary<SubGoal, int>();
 
     GPlanner planner;
     Queue<GAction> actionQueue;
     public GAction currentAction;
-    public SubGoal currentGoal;
+    SubGoal currentGoal;
 
     // Start is called before the first frame update
-    public void Start()
-    {
+    public void Start() {
+
         GAction[] acts = this.GetComponents<GAction>();
-        foreach (GAction a in acts)
-        {
+        foreach (GAction a in acts) {
+
             actions.Add(a);
         }
     }
 
     bool invoked = false;
-    void CompleteAction()
-    {
-        invoked = false;
+
+    public void CompleteAction() {
+
         currentAction.running = false;
         currentAction.PostPerform();
+        invoked = false;
     }
 
-    // Update is called once per frame
-    void LateUpdate()
-    {
-        if (currentAction != null && currentAction.running)
-        {
-            if (currentAction.agent.hasPath && currentAction.agent.remainingDistance < 1f)
-            {
-                if (!invoked)
-                {
+    void LateUpdate() {
+
+        if (currentAction != null && currentAction.running) {
+
+            // Check the agent has a goal and has reached that goal
+            if (currentAction.agent.hasPath && currentAction.agent.remainingDistance < 1.0f) {
+
+                if (!invoked) {
+
                     Invoke("CompleteAction", currentAction.duration);
-                    invoked = true;
+                    invoked = false;
                 }
             }
             return;
         }
-        
-        
 
-        if (planner == null || actionQueue == null)
-        {
+        // Check we have a planner and an actionQueue
+        if (planner == null || actionQueue == null) {
+
+            // If planner is null then create a new one
             planner = new GPlanner();
+
+            // Sort the goals in descending order and store them in sortedGoals
             var sortedGoals = from entry in goals orderby entry.Value descending select entry;
-            foreach (KeyValuePair<SubGoal, int> sg in sortedGoals)
-            {
-                actionQueue = planner.plan(actions, sg.Key.sgoals, null);
-                if (actionQueue != null)
-                {
+
+            foreach (KeyValuePair<SubGoal, int> sg in sortedGoals) {
+
+                actionQueue = planner.plan(actions, sg.Key.sGoals, null);
+                // If actionQueue is not = null then we must have a plan
+                if (actionQueue != null) {
+
+                    // Set the current goal
                     currentGoal = sg.Key;
                     break;
                 }
             }
         }
-        if (actionQueue != null && actionQueue.Count == 0)
-        {
-            if (currentGoal.remove)
-            {
+
+        // Have we an actionQueue
+        if (actionQueue != null && actionQueue.Count == 0) {
+
+            // Check if currentGoal is removable
+            if (currentGoal.remove) {
+
+                // Remove it
                 goals.Remove(currentGoal);
             }
+            // Set planner = null so it will trigger a new one
             planner = null;
         }
-        
-        if (actionQueue != null && actionQueue.Count > 0)
-        {
+
+        // Do we still have actions
+        if (actionQueue != null && actionQueue.Count > 0) {
+
+            // Remove the top action of the queue and put it in currentAction
             currentAction = actionQueue.Dequeue();
-            if (currentAction.PrePerform())
-            {
-                if (currentAction.target == null && currentAction.targetTag != "")
-                {
+
+            if (currentAction.PrePerform()) {
+
+                // Get our current object
+                if (currentAction.target == null && currentAction.targetTag != "") {
+
                     currentAction.target = GameObject.FindWithTag(currentAction.targetTag);
                 }
-                
-                if (currentAction.target != null)
-                {
+
+                if (currentAction.target != null) {
+
+                    // Activate the current action
                     currentAction.running = true;
+                    // Pass Unities AI the destination for the agent
                     currentAction.agent.SetDestination(currentAction.target.transform.position);
                 }
-                
-            }
-            else
-            {
+            } else {
+
+                // Force a new plan
                 actionQueue = null;
             }
         }
