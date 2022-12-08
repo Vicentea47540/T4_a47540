@@ -17,16 +17,16 @@ public class Node
         this.state = new Dictionary<string, int>(allstates);
         this.action = action;
     }
+
     public Node(Node parent, float cost, Dictionary<string, int> allstates, Dictionary<string, int> beliefstates, GAction action)
     {
         this.parent = parent;
         this.cost = cost;
         this.state = new Dictionary<string, int>(allstates);
         foreach (KeyValuePair<string, int> b in beliefstates)
-        {
             if (!this.state.ContainsKey(b.Key))
                 this.state.Add(b.Key, b.Value);
-        }
+
         this.action = action;
     }
 }
