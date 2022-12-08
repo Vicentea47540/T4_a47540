@@ -14,8 +14,8 @@ public class Patient : GAgent
         SubGoal s2 = new SubGoal("isTreated", 1, true);
         goals.Add(s2, 5);
 
-        SubGoal s3 = new SubGoal("GoHome", 1, true);
-        goals.Add(s3, 5);
+        SubGoal s3 = new SubGoal("isHome", 1, true);
+        goals.Add(s3, 1);
     }
 
 }
